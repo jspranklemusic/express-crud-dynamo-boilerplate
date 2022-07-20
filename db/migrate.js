@@ -14,18 +14,20 @@ AWS.config.update( awsConfigObject );
 
 const dynamoDb = new AWS.DynamoDB();
 
+
 const importSchemaFromFiles = () => {
     const directoryFiles = fs.readdirSync("./db");
-    console.log(directoryFiles.length - 1 + " files found:")
+
     directoryFiles.forEach(file => {
         if(file != "migrate.js"){
             const file_path = __dirname + "/" + file
             const modelName = file.split(".");
-            if(modelName[1] == "js"){
-                models[modelName[0][0].toUpperCase() + modelName[0].substring(1)] = require(file_path);
+            if(modelName[2] == "js"){
+                models[modelName[0][0].toUpperCase() + file.substring(1)] = require(file_path);
             }
         }
     })
+    // console.log(directoryFiles.length - 1 + " files found:", models)
 }
 
 importSchemaFromFiles();
@@ -74,14 +76,25 @@ const generateTableFromSchema = model => {
     return config
 }
 
+async function createTable(model){
+    try {
+        const response = await dynamoDb.describeTable({TableName: model.tableName}).promise();
+        console.log(`${response.Table.TableName} - table exists`);
+    } catch {
+        console.log("making table from model: ", model.tableName)
+        const params = generateTableFromSchema(model);
+        dynamoDb.createTable(params, function(err, data) {
+            if (err) {
+            console.log("Could not create table - ",err);
+            } else {
+            console.log(data, `"${model.tableName}" Table created.`);
+            }
+        });
+    }
+
+}
+
 for(let model in models){
-    const params = generateTableFromSchema(models[model]);
-    dynamoDb.createTable(params, function(err, data) {
-        if (err) {
-        console.log("Could not create table - ",err);
-        } else {
-        console.log(data, "Table created.");
-        }
-    });
+    createTable(models[model]);
 }
 
