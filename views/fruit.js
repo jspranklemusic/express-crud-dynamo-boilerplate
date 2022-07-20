@@ -1,32 +1,21 @@
 const links = require("./links.js");
 const Fruits = require("../db/fruits");
 
-const fruit = async params => 
-{
-    if(params.id) {
-        const response = await Fruits.getById(params.id);
-        const fruit = response.Item;
-        if(fruit){
-            fruit.Quantity -= 1;
-            if(fruit.Quantity == 0){
-                await Fruits.deleteById(params.id)
-            }else{
-                await Fruits.update(fruit);
-            }
-        }
-    }
+const fruit = async params => {
 
     const fruits = await Fruits.getAll();
+    console.log(fruits)
     let fruitsHTML = "";
     fruits.Items.forEach((item,i) => {
         fruitsHTML += /*html*/ `
             <li>
                 <strong>${item.FruitName}</strong>
                 <ul>
-                    <li>Quantity: ${item.Quantity}</li>
+                    <li>Quantity: ${item.FruitQuantity}</li>
                     <li>Seller: ${item.SellerEmail}</li>
                     <li>Price: $${item.FruitCost/100}</li>
-                    <a href="/fruit/buy?id=${item.Id}">Buy</a>
+                    <a onclick='buyFruit(${JSON.stringify(item)})' href="#">Buy</a>
+                    <a onclick='deleteFruit(${JSON.stringify(item)})' href="#">Delete</a>
                 </ul>
             </li>
         `
@@ -54,12 +43,32 @@ const fruit = async params =>
             <h3>Here are some extra params:</h3>
                 <pre>${JSON.stringify({...params, links: true})}</pre>
             <script>
-                async function fetchFruits(){
-                    const response = await fetch("/api/fruits");
-                    const data = await response.json();
-                    document.getElementById("fruits").innerHTML = "<pre>" + JSON.stringify(data) + "</pre>"
+                // PUT
+                function buyFruit(fruit){
+                    
+                    fruit.FruitQuantity -= 1;
+        
+                    fetch('/api/fruit', {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type" : "application/json",
+                            "Accept" : "application/json"
+                        },
+                        body: JSON.stringify({...fruit })
+                    }).then(function(){
+                        window.location.reload()
+                    })
                 }
-                //fetchFruits();
+
+                // DELETE
+                function deleteFruit(fruit){
+                    fetch('/api/fruit?id='+fruit.Id,{
+                        method: 'DELETE'
+                    }).then(function(){
+                        window.location.reload()
+                    })
+                }
+    
             </script>
         </body>
         

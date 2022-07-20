@@ -17,9 +17,11 @@ const app = express();
 const views = require("./views.js");
 const bodyParser = require('body-parser');
 
-app.use(bodyParser.json({ type: 'application/*+json' }))
-app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }))
-app.use(bodyParser.text({ type: 'text/html' }))
+app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
+app.use(bodyParser.text({ type: 'text/html' }));
+app.use(bodyParser.urlencoded());
+app.use(express.json());
+
 
 // port on which the server listens
 const PORT = process.env.PORT || 8000;
@@ -41,46 +43,98 @@ function generateViews(){
 
 generateViews();
 
-// controllers
+//CRUD
+
+// read
 app.get('/api/fruit', async (req,res) => {
+    try {
+        if(req.query.id) {
+            const response = await Fruits.getById(req.query.id);
+            const fruit = response.Item;
+            if(fruit)
+                return res.json(fruit);
+        }else{
+            const response = await Fruits.getAll();
+            return res.json(response.Items)
+        }
     return res.json({results: "no fruits yet!"})
+    }catch(error){
+        res.status(400).send(err)
+    }
 })
 
+// create
 app.post('/api/fruit', async (req,res) => {
-    
     try{
-        const { FruitName, FruitColor, FruitCost, Quantity, SellerEmail } = req.body;
+        console.log(req.headers)
+        const { FruitName, FruitColor, FruitCost, FruitQuantity, SellerEmail } = req.body;
         const result = await Fruits.save({ 
             FruitName, 
             FruitColor, 
-            FruitCost, 
-            Quantity, 
+            FruitCost: parseFloat(FruitCost)*100, 
+            FruitQuantity: parseInt(FruitQuantity), 
             SellerEmail 
         });
-        res.send(result)
+        // if request is coming from SSR view
+        if(req.headers['content-type'] == 'application/x-www-form-urlencoded'){
+            return res.redirect("/fruit/buy");
+        }
+        return res.send(result)
     }catch(err){
         res.status(400).send(err)
     }
 })
 
-app.post('/api/fruit/sample', async (req, res)=>{
-    try {
-        const result = await Fruits.save({
-            FruitName: String("apple"),
-            FruitColor: String("red"),
-            FruitCost: Number(150),
-            Quantity: Number(10),
-            SellerEmail: String("email_name2@mail.com"),
-        })
-        return res.json(result.params);
-    } catch(error) {
-        res.status(400).send(error)
+// update
+app.put("/api/fruit", async (req,res) => {
+    // if(req.query.id) {
+    //     const response = await Fruits.getById(req.query.id);
+    //     const fruit = response.Item;
+    //     let result;
+    //     if(fruit){
+    //         fruit.FruitQuantity -= 1;
+    //         if(fruit.FruitQuantity == 0){
+    //             result = await Fruits.deleteById(params.id)
+    //         }else{
+    //             result = await Fruits.update(fruit);
+    //         }
+    //     }
+
+    // }
+    try{
+        console.log("req.body",req.body)
+        const { FruitName, FruitColor, FruitCost, FruitQuantity, SellerEmail, Id } = req.body;
+        const result = await Fruits.update({ 
+            FruitName, 
+            FruitColor, 
+            FruitCost: parseInt(FruitCost), 
+            FruitQuantity: parseInt(FruitQuantity), 
+            SellerEmail,
+            Id
+        });
+    
+        return res.json(result)
+
+    } catch(err){
+        return res.status(400).send(err);
     }
 })
 
-app.get("/rows/all", (req, res) => {
-    // magic happens here
-});
+// delete
+app.delete("/api/fruit", async (req,res) => {
+    try {
+        if(!req.query.id){
+            return res.status(400).send("Delete request must have an id")
+        }
+        // if request is coming from SSR view
+        const result = await Fruits.deleteById(req.query.id);
+        return res.send(result)
+    } catch(err) {
+        res.status(400).send(err);
+    }
+})
+
+
 
 app.listen(PORT, () => {
     console.log(`Listening on port: ${PORT}`);

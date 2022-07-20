@@ -10,11 +10,19 @@ const Fruits = {
         FruitName: String,
         FruitColor: String,
         FruitCost: Number,
-        Quantity: Number,
+        FruitQuantity: Number,
         SellerEmail: String,
     },
     tableName: "Fruits",
     hash: "Id",
+
+    build(){
+        const templateObject = {...this.schema};
+        for(let key in templateObject){
+            templateObject[key] = templateObject[key]();
+        }
+        return templateObject;
+    },
 
     validate(data){
     //    all schema attributes are required by default
@@ -22,16 +30,20 @@ const Fruits = {
         try{
             // check to make sure there are no invalid keys being passed
             Object.keys(data).forEach(key=>{
+                console.log(key)
+                let newDataType = typeof data[key];
+                let schemaDataType = this.schema[key]();
                 if(!key in this.schema) 
                     throw new Error(`"${key}" is not a valid key.`);
-                if(typeof this.schema[key]() != typeof data[key]){
-                    throw new Error(`${data[key]} is not a valid data type. Type "${typeof this.schema[key]}" is required.`);
+                // formdata sends numbers as strings, so both must be valid checked
+                else if(typeof schemaDataType != newDataType){
+                    throw new Error(`${key} has invalid data type of "${newDataType}". Type "${typeof schemaDataType}" is required.`);
                 }
             })
             // check to make sure all of the keys are present
             thisKeys.forEach(key => {
                 if(key != "Id" && !data[key]){
-                    throw new Error(`${data[key]} is a required attribute.`)
+                    throw new Error(`${key} is a required attribute - received value "${data[key]}"`)
                 }
             })
             console.log("Data successfully validated!")
@@ -83,9 +95,11 @@ const Fruits = {
             },
             ...this.generateUpdateQuery(data)
         };
-        console.log(params)
+
         const result = await dynamoDbClient.update(params).promise();
-        return { result, params};
+        return { result, params };
+  
+
     },
 
     generateUpdateQuery(fields){

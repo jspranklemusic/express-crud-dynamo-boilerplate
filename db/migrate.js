@@ -2,7 +2,6 @@
 const fs = require("fs");
 const models = {}
 const AWS = require('aws-sdk');
-const { exit } = require("process");
 const awsConfigObject = {
     region: process.env.AWS_REGION,
     profile: process.env.AWS_PROFILE
@@ -14,7 +13,6 @@ if(process.env.MODE == "development") {
 AWS.config.update( awsConfigObject );
 
 const dynamoDb = new AWS.DynamoDB();
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
 
 const importSchemaFromFiles = () => {
     const directoryFiles = fs.readdirSync("./db");
