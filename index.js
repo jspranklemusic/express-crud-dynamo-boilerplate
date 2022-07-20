@@ -19,8 +19,6 @@ const app = express();
 const bodyParser = require('body-parser');
 const multer = require('multer');
 
-console.log(process.env)
-
 // load middleware
 app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
 app.use(bodyParser.text({ type: 'text/html' }));
@@ -49,7 +47,6 @@ function generateViews(){
         })
     })
 }
-
 
 generateViews();
 
@@ -108,9 +105,7 @@ app.put("/api/fruit", async (req,res) => {
             SellerEmail,
             Id
         });
-    
         return res.json(result)
-
     } catch(err){
         return res.status(400).send(err);
     }
@@ -142,7 +137,6 @@ app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
         Body: req.file.buffer
     };
     const result = await s3.upload (uploadParams).promise();
-
     const upload = await PhotoUploads.save({
         Url: result.Location,
         DateUploaded: Date.now(),
@@ -151,8 +145,6 @@ app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
 
     return res.send({result, upload});
 })  
-
-
 
 
 app.listen(PORT, () => {
