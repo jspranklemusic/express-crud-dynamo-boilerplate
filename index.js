@@ -11,11 +11,15 @@ if(process.env.MODE == "development") {
     console.log(awsConfigObject)
 }
 AWS.config.update( awsConfigObject );
+s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
 // load other packages
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const multer = require('multer');
+
+console.log(process.env)
 
 // load middleware
 app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
@@ -23,8 +27,9 @@ app.use(bodyParser.text({ type: 'text/html' }));
 app.use(bodyParser.urlencoded());
 app.use(express.json());
 
-// load local packages
+// load local packages and models
 const Fruits = require('./db/fruits.model.js')
+const PhotoUploads = require('./db/photo-uploads.model')
 const views = require("./views.js");
 
 // port on which the server listens
@@ -124,6 +129,29 @@ app.delete("/api/fruit", async (req,res) => {
         res.status(400).send(err);
     }
 })
+
+// S3 API ROUTES
+app.get("/api/photo-uploads", async (req,res)=>{
+    const result = await PhotoUploads.getAll();
+    return res.json(result);
+})
+app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
+    const uploadParams = {
+        Bucket: process.env.S3_UPLOAD_BUCKET, 
+        Key: req.file.originalname, 
+        Body: req.file.buffer
+    };
+    const result = await s3.upload (uploadParams).promise();
+
+    const upload = await PhotoUploads.save({
+        Url: result.Location,
+        DateUploaded: Date.now(),
+        Caption: result.Key
+    });
+
+    return res.send({result, upload});
+})  
+
 
 
 

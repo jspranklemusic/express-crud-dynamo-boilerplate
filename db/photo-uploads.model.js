@@ -3,7 +3,7 @@ const DynamoModeler = require("../lib/DynamoModeler");
 const PhotoUploads = new DynamoModeler({
     schema: {
         Url: String,
-        DateUploaded: Date,
+        DateUploaded: Number,
         Id: String,
         Caption: String
     },
