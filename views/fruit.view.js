@@ -1,5 +1,5 @@
-const links = require("./links.js");
-const Fruits = require("../db/fruits");
+const links = require("./links.view.js");
+const Fruits = require("../db/fruits.model.js");
 
 const fruit = async params => {
 
@@ -45,9 +45,7 @@ const fruit = async params => {
             <script>
                 // PUT
                 function buyFruit(fruit){
-                    
                     fruit.FruitQuantity -= 1;
-        
                     fetch('/api/fruit', {
                         method: "PUT",
                         headers: {

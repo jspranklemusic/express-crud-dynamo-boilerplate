@@ -1,14 +1,14 @@
 const views = {
     "/": {
-        html: require("./views/index.js"),
+        html: require("./views/index.view.js"),
         name: "Home"
     },
     "/fruit/buy": {
-        html: require("./views/fruit.js"),
+        html: require("./views/fruit.view.js"),
         name: "Buy Fruit"
     },
     "/fruit/sell": {
-        html: require("./views/fruit-sell.js"),
+        html: require("./views/fruit-sell.view.js"),
         name: "Sell Fruit"
     }
 }

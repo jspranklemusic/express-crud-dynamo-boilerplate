@@ -1,4 +1,4 @@
-const links = require("./links.js");
+const links = require("./links.view.js");
 const index = params => 
 {
     

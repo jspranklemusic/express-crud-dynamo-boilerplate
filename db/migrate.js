@@ -1,4 +1,4 @@
-
+// this module dynamically loads models from their postition in the /db folder
 const fs = require("fs");
 const models = {}
 const AWS = require('aws-sdk');

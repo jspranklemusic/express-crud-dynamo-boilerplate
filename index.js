@@ -1,6 +1,6 @@
 // ABOUT: this is a boilerplate SSR app to demonstrate connection to S3 and DynamoDB
 
-// aws must be required first
+// Load AWS Config
 const AWS = require('aws-sdk');
 const awsConfigObject = {
     region: process.env.AWS_REGION,
@@ -11,17 +11,21 @@ if(process.env.MODE == "development") {
     console.log(awsConfigObject)
 }
 AWS.config.update( awsConfigObject );
-const Fruits = require('./db/fruits')
+
+// load other packages
 const express = require('express');
 const app = express();
-const views = require("./views.js");
 const bodyParser = require('body-parser');
 
+// load middleware
 app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
 app.use(bodyParser.text({ type: 'text/html' }));
 app.use(bodyParser.urlencoded());
 app.use(express.json());
 
+// load local packages
+const Fruits = require('./db/fruits.model.js')
+const views = require("./views.js");
 
 // port on which the server listens
 const PORT = process.env.PORT || 8000;
@@ -41,9 +45,10 @@ function generateViews(){
     })
 }
 
+
 generateViews();
 
-//CRUD
+//CRUD API routes
 
 // read
 app.get('/api/fruit', async (req,res) => {
@@ -87,20 +92,6 @@ app.post('/api/fruit', async (req,res) => {
 
 // update
 app.put("/api/fruit", async (req,res) => {
-    // if(req.query.id) {
-    //     const response = await Fruits.getById(req.query.id);
-    //     const fruit = response.Item;
-    //     let result;
-    //     if(fruit){
-    //         fruit.FruitQuantity -= 1;
-    //         if(fruit.FruitQuantity == 0){
-    //             result = await Fruits.deleteById(params.id)
-    //         }else{
-    //             result = await Fruits.update(fruit);
-    //         }
-    //     }
-
-    // }
     try{
         console.log("req.body",req.body)
         const { FruitName, FruitColor, FruitCost, FruitQuantity, SellerEmail, Id } = req.body;
