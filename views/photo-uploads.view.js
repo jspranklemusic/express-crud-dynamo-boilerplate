@@ -4,21 +4,23 @@ const PhotoUploads = require("../db/photo-uploads.model");
 
 
 const photoUploads = async params => {
-    const uploads = await PhotoUploads.getAll();
     let uploadsHTML = ''
-    uploads.Items.forEach(item => {
-        console.log(item.DateUploaded)
-        uploadsHTML += /*html*/ `
-            <div>
-                <a target="_blank" href="${item.Url}">
-                    <img style="width:400px;" alt="${item.Caption}" src="${item.Url}"/>
-                </a>
+    const uploads = await PhotoUploads.getAll();
+    if(uploads){
+        uploads.Items.forEach(item => {
+            console.log(item.DateUploaded)
+            uploadsHTML += /*html*/ `
                 <div>
-                    <em>${item.Caption} </em>
+                    <a target="_blank" href="${item.Url}">
+                        <img style="width:400px;" alt="${item.Caption}" src="${item.Url}"/>
+                    </a>
+                    <div>
+                        <em>${item.Caption} </em>
+                    </div>
                 </div>
-            </div>
-        `
-    })
+            `
+        })
+    }
     return  ( /*html*/ ` 
     <html>
         <head>
