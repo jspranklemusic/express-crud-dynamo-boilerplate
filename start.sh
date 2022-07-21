@@ -4,4 +4,4 @@ if [ -f prod.env ]; then
 fi
 
 export PORT=80
-node index.js
+sudo node index.js
