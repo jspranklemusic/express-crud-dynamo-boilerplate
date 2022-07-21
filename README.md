@@ -20,9 +20,11 @@
 </p>
 <h3>Running</h3>
 
-    There are two main methods of running this app.
-    npm run dev
-    This runs a shell script that will initialize a local DynamoDB instance for development, set the environment variables found in your <em>local.env</em> file, and start an express server with nodemon, which will automatically reload whenever a change in a javascript file is detected. If running for the first time, start the server first and then run sh migrate-dev to initialize the database tables. This command must be running after the server is started to connect to the local DynamoDB instance.
-     npm start
-    This runs a shell script that will set the environment variables found in your <em>local.env</em> file, and start an express server with node. This will not automatically reload, and it will point to the DynamoDB database available in your Amazon account instead of running the database locally. If running for the first time, run sh migrate-prod<to initialize the database tables.
+There are two main methods of running this app.
+<h4>Local</h4>
+<pre>npm run dev</pre>
+This runs a shell script that will initialize a local DynamoDB instance for development, set the environment variables found in your <em>local.env</em> file, and start an express server with nodemon, which will automatically reload whenever a change in a javascript file is detected. If running for the first time, start the server first and then run <pre>sh migrate-dev</pre> to initialize the database tables. This command must be running after the server is started to connect to the local DynamoDB instance.
+<h4>Production</h4>
+<pre>npm start</pre>
+This runs a shell script that will set the environment variables found in your <em>local.env</em> file, and start an express server with node. This will not automatically reload, and it will point to the DynamoDB database available in your Amazon account instead of running the database locally. If running for the first time, run <pre>sh migrate-prod</pre>to initialize the database tables.
 
