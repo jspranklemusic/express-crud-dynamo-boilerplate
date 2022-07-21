@@ -8,15 +8,20 @@ const photoUploads = async params => {
     const uploads = await PhotoUploads.getAll();
     if(uploads){
         uploads.Items.forEach(item => {
-            console.log(item.DateUploaded)
+            console.log(item.DateUploaded);
+            var bucketName = encodeURIComponent(item.Url.split('.s3.')[0].split('\/\/')[1]);
+            var key = encodeURIComponent(item.Caption);
+            var id = encodeURIComponent(item.Id);
             uploadsHTML += /*html*/ `
                 <div>
                     <a target="_blank" href="${item.Url}">
                         <img style="width:400px;" alt="${item.Caption}" src="${item.Url}"/>
                     </a>
                     <div>
-                        <em>${item.Caption} </em>
+                        <em>${item.Caption}</em>
+                        <button onclick="deleteImage('${bucketName}','${key}','${id}')">Delete</button>
                     </div>
+                    <br>
                 </div>
             `
         })
@@ -39,7 +44,7 @@ const photoUploads = async params => {
                 `
             : ""}
             <h3>Upload Photo</h3>
-            <form  id="photo-uploader" enctype="multipart/form-data" action="/api/photo-uploads" method="POST">
+            <form onsubmit="return uploadImage(event)"  id="photo-uploader" enctype="multipart/form-data" action="/api/photo-uploads?redirect=true" method="POST">
                 <input name="photo" onchange="document.getElementById('submit').removeAttribute('disabled')" type="file"/>
                 <div>
                     <br>
@@ -55,7 +60,13 @@ const photoUploads = async params => {
             <h3>Process.env:</h3>
                 <pre>${JSON.stringify(process.env.AWS_REGION)}</pre>
             <script>
-
+                function deleteImage(bucket,key,id){
+                    fetch("/api/photo-uploads?bucket="+bucket+"&id="+id+"&redirect=true", {
+                        method: "DELETE"
+                    }).then(function(){
+                        window.location.reload();
+                    })
+                }
             </script>
         </body>
     </html>

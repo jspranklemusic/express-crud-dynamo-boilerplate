@@ -19,16 +19,18 @@ const app = express();
 const bodyParser = require('body-parser');
 const multer = require('multer');
 
+// load local packages and models
+const Fruits = require('./db/fruits.model.js')
+const PhotoUploads = require('./db/photo-uploads.model')
+const views = require("./views.js");
+
 // load middleware
 app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
 app.use(bodyParser.text({ type: 'text/html' }));
 app.use(bodyParser.urlencoded());
 app.use(express.json());
 
-// load local packages and models
-const Fruits = require('./db/fruits.model.js')
-const PhotoUploads = require('./db/photo-uploads.model')
-const views = require("./views.js");
+
 
 // port on which the server listens
 const PORT = process.env.PORT || 8000;
@@ -130,6 +132,7 @@ app.get("/api/photo-uploads", async (req,res)=>{
     const result = await PhotoUploads.getAll();
     return res.json(result);
 })
+
 app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
     const uploadParams = {
         Bucket: process.env.S3_UPLOAD_BUCKET, 
@@ -142,9 +145,38 @@ app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
         DateUploaded: Date.now(),
         Caption: result.Key
     });
-
+    if(req.query.redirect){
+        return res.redirect("/photo-uploads");
+    }
     return res.send({result, upload});
 })  
+
+app.delete("/api/photo-uploads", async (req, res)=>{
+    try{
+        // if only id is passed, look up the object
+        let deleteParams = {};
+        if(!req.query.bucket | !req.query.key){
+            const result = await PhotoUploads.getById(req.query.id);
+            deleteParams = {
+                Bucket: result.Item.Url.split('.s3.')[0].split('\/\/')[1],
+                Key: result.Item.Caption
+            }
+        }else{
+            deleteParams = {
+                Bucket: req.query.bucket,
+                Key: req.query.key
+            }
+        }
+        const objectDeleteResult = await s3.deleteObject(deleteParams).promise();
+        const metadataResult = await PhotoUploads.deleteById(req.query.id);
+        if(req.query.redirect){
+            return res.redirect("/photo-uploads");
+        }
+        return res.send({metadataResult, objectDeleteResult})
+    } catch(error) {
+        res.status(400).send(error);
+    }
+})
 
 
 app.listen(PORT, () => {
