@@ -17,12 +17,7 @@ s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const multer = require('multer');
-
-// load local packages and models
-const Fruits = require('./db/fruits.model.js')
-const PhotoUploads = require('./db/photo-uploads.model')
-const views = require("./views.js");
+const views = require("./views-generator.js");
 
 // load middleware
 app.use(bodyParser.raw({ type: 'application/vnd.custom-type' }));
@@ -30,7 +25,9 @@ app.use(bodyParser.text({ type: 'text/html' }));
 app.use(bodyParser.urlencoded());
 app.use(express.json());
 
-
+// load routes
+app.use(require('./controllers/fruits.controller'));
+app.use(require('./controllers/photo-uploads.controller'));
 
 // port on which the server listens
 const PORT = process.env.PORT || 8000;
@@ -49,135 +46,7 @@ function generateViews(){
         })
     })
 }
-
 generateViews();
-
-//CRUD API routes
-
-// read
-app.get('/api/fruit', async (req,res) => {
-    try {
-        if(req.query.id) {
-            const response = await Fruits.getById(req.query.id);
-            const fruit = response.Item;
-            if(fruit)
-                return res.json(fruit);
-        }else{
-            const response = await Fruits.getAll();
-            return res.json(response.Items)
-        }
-    return res.json({results: "no fruits yet!"})
-    }catch(error){
-        res.status(400).send(err)
-    }
-})
-
-// create
-app.post('/api/fruit', async (req,res) => {
-    try{
-        console.log(req.headers)
-        const { FruitName, FruitColor, FruitCost, FruitQuantity, SellerEmail } = req.body;
-        const result = await Fruits.save({ 
-            FruitName, 
-            FruitColor, 
-            FruitCost: parseFloat(FruitCost)*100, 
-            FruitQuantity: parseInt(FruitQuantity), 
-            SellerEmail 
-        });
-        // if request is coming from SSR view
-        if(req.headers['content-type'] == 'application/x-www-form-urlencoded'){
-            return res.redirect("/fruit/buy");
-        }
-        return res.send(result)
-    }catch(err){
-        res.status(400).send(err)
-    }
-})
-
-// update
-app.put("/api/fruit", async (req,res) => {
-    try{
-        console.log("req.body",req.body)
-        const { FruitName, FruitColor, FruitCost, FruitQuantity, SellerEmail, Id } = req.body;
-        const result = await Fruits.update({ 
-            FruitName, 
-            FruitColor, 
-            FruitCost: parseInt(FruitCost), 
-            FruitQuantity: parseInt(FruitQuantity), 
-            SellerEmail,
-            Id
-        });
-        return res.json(result)
-    } catch(err){
-        return res.status(400).send(err);
-    }
-})
-
-// delete
-app.delete("/api/fruit", async (req,res) => {
-    try {
-        if(!req.query.id){
-            return res.status(400).send("Delete request must have an id")
-        }
-        // if request is coming from SSR view
-        const result = await Fruits.deleteById(req.query.id);
-        return res.send(result)
-    } catch(err) {
-        res.status(400).send(err);
-    }
-})
-
-// S3 API ROUTES
-app.get("/api/photo-uploads", async (req,res)=>{
-    const result = await PhotoUploads.getAll();
-    return res.json(result);
-})
-
-app.post("/api/photo-uploads", multer().single('photo'), async (req,res)=>{
-    const uploadParams = {
-        Bucket: process.env.S3_UPLOAD_BUCKET, 
-        Key: req.file.originalname, 
-        Body: req.file.buffer
-    };
-    const result = await s3.upload (uploadParams).promise();
-    const upload = await PhotoUploads.save({
-        Url: result.Location,
-        DateUploaded: Date.now(),
-        Caption: result.Key
-    });
-    if(req.query.redirect){
-        return res.redirect("/photo-uploads");
-    }
-    return res.send({result, upload});
-})  
-
-app.delete("/api/photo-uploads", async (req, res)=>{
-    try{
-        // if only id is passed, look up the object
-        let deleteParams = {};
-        if(!req.query.bucket | !req.query.key){
-            const result = await PhotoUploads.getById(req.query.id);
-            deleteParams = {
-                Bucket: result.Item.Url.split('.s3.')[0].split('\/\/')[1],
-                Key: result.Item.Caption
-            }
-        }else{
-            deleteParams = {
-                Bucket: req.query.bucket,
-                Key: req.query.key
-            }
-        }
-        const objectDeleteResult = await s3.deleteObject(deleteParams).promise();
-        const metadataResult = await PhotoUploads.deleteById(req.query.id);
-        if(req.query.redirect){
-            return res.redirect("/photo-uploads");
-        }
-        return res.send({metadataResult, objectDeleteResult})
-    } catch(error) {
-        res.status(400).send(error);
-    }
-})
-
 
 app.listen(PORT, () => {
     console.log(`Listening on port: ${PORT}`);
