@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ -f prod.env ]; then
   export $(echo $(cat prod.env | sed 's/#.*//g'| xargs) | envsubst)
 fi
