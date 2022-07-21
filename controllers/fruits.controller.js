@@ -1,6 +1,6 @@
 //CRUD API routes
 const express = require('express');
-const router = express.router();
+const router = express.Router();
 const Fruits = require("../db/fruits.model");
 
 // read

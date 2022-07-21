@@ -1,7 +1,7 @@
 // S3 API ROUTES
 const express = require('express');
 const multer = require('multer');
-const router = express.router();
+const router = express.Router();
 const PhotoUploads = require("../db/photo-uploads.model");
 
 // get all uploads
